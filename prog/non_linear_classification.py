@@ -15,8 +15,10 @@ from MAPkernel import MAPkernel
 
 
 def generate_data():
-    X_1_1 = np.random.randn(20, 2) + np.array([[5, 1]]) # Gaussienne centrée en mu_1_1=[5,1]
+    X_1_1 = np.random.randn(30, 2) + np.array([[5, 1]]) # Gaussienne centrée en mu_1_1=[5,1]
     X_1_2 = np.random.randn(20, 2) + np.array([[0, 4]]) # Gaussienne centrée en mu_1_1=[0,4]
+    #X_1_2 = np.random.randn(30, 2) + np.array([[4, 4]]) # Gaussienne centrée en mu_1_1=[5,1]
+
     X_1 = np.vstack([X_1_1, X_1_2])
     t_1 = np.ones(X_1.shape[0])
     X_2 = np.random.randn(40, 2) + np.array([[2, 3]]) # Gaussienne centrée en mu_2=[2,3]
@@ -46,20 +48,24 @@ def main():
 
     # On entraine le modèle
     mp = MAPkernel(kernel=kernel_type)
+    predictions_entrainement = None
 
-    if grid_search == 0:
-        mp.entrainement(X_train, t_train)
-    else:
+    if grid_search == 1:
         mp.grid_search(X_train, t_train, X_val, t_val)
 
+    mp.entrainement(X_train, t_train)
+    predictions_entrainement = np.array([mp.prediction(x) for x in X_train])
+    predictions_test = np.array([mp.prediction(x) for x in X_test])
     # ~= À MODIFIER =~. 
     # AJOUTER CODE AFIN DE CALCULER L'ERREUR D'APPRENTISSAGE
     # ET DE VALIDATION EN % DU NOMBRE DE POINTS MAL CLASSES
-    err_train = 0
-    print('Erreur d entrainement = ', err_train, '%')
+    err_train = 100 * np.sum(np.abs(predictions_entrainement - t_train)) / len(t_train)
+    print("Erreur d'entrainement = ", err_train, "%")
 
-    err_test = 100
-    print('Erreur de test = ', err_test, '%')
+    err_test = 100*np.sum(np.abs(predictions_test-t_test))/len(t_test)
+    print("Erreur de test = ", err_test, "%")
+
+
 
     # Analyse des erreurs
     if (err_train < 1.0 and err_test > 8.0) or err_test-err_train > 20.0:
@@ -68,7 +74,6 @@ def main():
         print('WARNING!!! Sous-entrainement possible!')
     if err_test > 20:
         print('WARNING!!! Erreur de test anormalement élevée!')
-
     # Affichage
     ix = np.arange(X_test[:, 0].min(), X_test[:, 0].max(), 0.1)
     iy = np.arange(X_test[:, 1].min(), X_test[:, 1].max(), 0.1)
